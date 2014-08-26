@@ -43,7 +43,10 @@ handler mvar conn = do
     (msg,d) <- recvFrom conn (read_max)
     putStrLn $ "< " ++ (SU.unpack msg)
     case Request.decode msg of 
-        Just rsp -> sendTo conn (Response.encode rsp) d
+        Just rsp -> do putStrLn $ "sending " ++ (show rsp)
+                       sendTo conn (Response.encode rsp) d
+        Nothing -> do putStrLn "failed"
+                      return 0
     handler mvar conn
 
 main = do
