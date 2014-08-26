@@ -9,7 +9,7 @@ import qualified Data.Map as Map
 import qualified Data.ByteString.Lazy.Char8 as U
 import qualified Data.ByteString.Lazy as B
 import qualified Crypto.Hash.SHA256 as C
-import Control.Monad.State.Lazy
+import Control.Concurrent
 
 type Hash = U.ByteString
 
@@ -28,25 +28,20 @@ get_file_part h n ps = case Map.lookup h (m_files ps) of
                                   else Nothing
     Nothing -> Nothing
 
-initialS = PeerState (Set.empty)
 
-{-DownloadResponse
-        { part_hash    :: !Text
-        , part_length :: Int 
-        , part_number :: Int 
-        , part :: !Text
-        } 
-    -}
+empty = PeerState Set.empty Map.empty
 
-attendRequest :: Request -> State PeerState (Maybe Response)
-attendRequest (GetPeersRequest sender) = 
-    do ps <- get
+
+
+attendRequest :: MVar PeerState -> Request -> IO (Maybe Response)
+attendRequest mvar (GetPeersRequest sender) = 
+    do ps <- takeMVar mvar
        let ps' = ps { m_peers = Set.insert sender  (m_peers ps) }
-       put ps'
+       putMVar mvar ps'
        return $ Just $ GetPeersResponse (Set.toList $ m_peers ps')
        
-attendRequest (DownloadRequest h pn) = 
-    do ps <- get
+attendRequest mvar (DownloadRequest h pn) = 
+    do ps <- readMVar mvar
        case get_file_part (unhex h) pn ps of 
            Just (Part hp pp) -> return $ Just (DownloadResponse (hex hp) l pn (hex pp))
                 where l = fromIntegral $ B.length pp

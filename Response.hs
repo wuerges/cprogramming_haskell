@@ -7,6 +7,7 @@ import Data.Aeson
 import Data.Text
 import GHC.Generics
 import qualified Data.ByteString.Lazy.Char8 as U
+import qualified Data.ByteString.Char8 as SU
 
 data Response = 
     DownloadResponse
@@ -22,3 +23,7 @@ data Response =
 
 instance FromJSON Response
 instance ToJSON Response
+
+encode r = U.toStrict $ Data.Aeson.encode r :: SU.ByteString
+decode r = Data.Aeson.decode (U.fromStrict r) :: Maybe Response
+
