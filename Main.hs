@@ -36,8 +36,9 @@ client mvar = do
 handler :: MVar PeerState -> Socket -> IO ()
 handler mvar conn = do
     (req,d) <- recvFrom conn (read_max)
-    rsp <- attendRequestBS mvar req
-    sendTo conn rsp d
+    forkIO $ do rsp <- attendRequestBS mvar req
+                sendTo conn rsp d
+                return ()
     handler mvar conn
 
 mainloop dir port peers = do
