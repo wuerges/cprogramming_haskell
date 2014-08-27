@@ -6,6 +6,7 @@ import qualified Data.Set as Set
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString
 import Control.Concurrent
+import Data.Maybe
 import System.Environment
 import qualified Data.Text as T
 import Fileio
@@ -13,8 +14,17 @@ import Fileio
 server_ip = "127.0.0.1" 
 my_hash = "my_hash_1"
 
-fileDownload hash = do
-    
+fileDownload hash peer = do
+    threadDelay 5000
+    rsp <- requestPart peer hash 0
+    case rsp of 
+       (Just p0, l) -> do pnts <- mapM (requestPart peer hash) [1..l]
+                          let pns = catMaybes $ map fst pnts
+                          putStrLn "Downloaded file completely"
+                          let f = File hash (p0 : pns)
+                          putStrLn $ show f 
+                          return $ Just f
+       (Nothing, _) -> return Nothing
 
 client mvar = do
     threadDelay 5000000
@@ -42,6 +52,9 @@ mainloop dir port peers = do
     --forkIO (server mvar my_peer fs)
     forkIO $ performNetworkService (handler mvar) my_peer
     threadDelay 1000000
+
+    fileDownload (Fileio.hashes fs !! 0) my_peer
+
     client mvar
     return ()
 
