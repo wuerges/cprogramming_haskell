@@ -19,11 +19,16 @@ data Response =
     | GetPeersResponse
         { peers :: [Peer]
         } 
-        deriving (Show, Generic)
+        deriving (Show, Generic, Eq)
+
+null_peers_response = GetPeersResponse []
 
 instance FromJSON Response
 instance ToJSON Response
 
-encode r = U.toStrict $ Data.Aeson.encode r :: SU.ByteString
+encode :: Response -> SU.ByteString
+encode r = U.toStrict $ Data.Aeson.encode r
+
+decode :: SU.ByteString -> Maybe Response
 decode r = Data.Aeson.decode (U.fromStrict r) :: Maybe Response
 

@@ -22,6 +22,8 @@ data PeerState =
         , m_files :: Map.Map Hash [Part]
         }
 
+ps_add_peers peers ps = do return $  ps { m_peers = Set.union (m_peers ps) peers }
+
 get_file_part :: Hash -> Int -> PeerState -> Maybe Part
 get_file_part h n ps = case Map.lookup h (m_files ps) of
     Just hps -> if n < length hps then Just $ hps !! n

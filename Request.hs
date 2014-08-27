@@ -16,7 +16,7 @@ data Request =
     | GetPeersRequest
         { sender   :: Peer
         } 
-        deriving (Show, Generic)
+        deriving (Show, Generic, Eq)
 
 encode r = U.toStrict $ Data.Aeson.encode r :: SU.ByteString
 decode r = Data.Aeson.decode (U.fromStrict r) :: Maybe Request
