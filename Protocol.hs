@@ -21,7 +21,7 @@ import Fileio
 data PeerState = 
     PeerState
         { m_peers :: Set.Set Peer
-        , m_files :: Map.Map Hash [Part]
+        , m_files :: FileMap
         }
 
 read_max = (16*1024)
@@ -31,14 +31,9 @@ ps_add_peer peer ps = do return $ ps { m_peers = Set.insert peer (m_peers ps) }
 ps_add_peers peers ps = do return $ ps { m_peers = Set.union (m_peers ps) peers }
 ps_add_peersL peers ps = ps_add_peers (Set.fromList peers) ps
 
-get_file_part :: Hash -> Int -> PeerState -> Maybe Part
-get_file_part h n ps = case Map.lookup h (m_files ps) of
-    Just hps -> if n < length hps then Just $ hps !! n
-                                  else Nothing
-    Nothing -> Nothing
 
-
-empty = PeerState Set.empty Map.empty
+mkPSFM fm = PeerState Set.empty fm
+--empty = PeerState Set.empty Map.empty
 
 
 attendRequestBS :: MVar PeerState -> SU.ByteString -> IO SU.ByteString 
@@ -61,7 +56,7 @@ attendRequest mvar (GetPeersRequest sender) =
        
 attendRequest mvar (DownloadRequest h pn) = 
     do ps <- readMVar mvar
-       case get_file_part (unhex h) pn ps of 
+       case getFilePart (unhex h) pn (m_files ps) of 
            Just (Part hp pp) -> return $ Just (DownloadResponse (hex hp) l pn (hex pp))
                 where l = fromIntegral $ B.length pp
            Nothing -> return Nothing
