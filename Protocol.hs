@@ -93,5 +93,12 @@ requestPeers mvar = do
     peers <- mapM requestPeers1 (Set.toList $ ts $ m_peers ps)
     modifyMVar_ mvar (ps_add_peers (Set.unions peers))
 
-
+requestPart :: Peer -> Hash -> Int -> IO (Maybe Part, Int)
+requestPart peer h n = do performNetwork talk peer
+    where talk s = do
+          send s $ Request.encode $ DownloadRequest h n
+          msg <- recv s read_max
+          case Response.decode msg of 
+                Just (DownloadResponse h' l' n' p') -> return $ (Part  p' h', l)
+                Nothing -> (Nothing, 0)
 

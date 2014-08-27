@@ -13,6 +13,8 @@ import Fileio
 server_ip = "127.0.0.1" 
 my_hash = "my_hash_1"
 
+fileDownload hash = do
+    
 
 client mvar = do
     threadDelay 5000000
