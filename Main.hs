@@ -18,16 +18,6 @@ client mvar = do
     requestPeers mvar 
     client mvar
 
-{-
-server mvar peer = withSocketsDo $ bracket connectMe sClose (handler mvar)
-    where connectMe = do
-            (serveraddr:_) <- getAddrInfo
-                                (Just (defaultHints {addrFlags = [AI_PASSIVE]}))
-                                Nothing (Just $ portS peer)
-            sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
-            bindSocket sock (addrAddress serveraddr) >> return sock
-            -}
-
 server mvar peer = performNetworkService (handler mvar) peer
 
 handler :: MVar PeerState -> Socket -> IO ()

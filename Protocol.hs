@@ -16,11 +16,7 @@ import Network.Socket.ByteString
 import Control.Exception
 import Data.Maybe
 import Debug.Trace
-
-type Hash = U.ByteString
-
-data Part = Part { part :: U.ByteString
-                 , h    :: Hash }
+import Fileio
 
 data PeerState = 
     PeerState
