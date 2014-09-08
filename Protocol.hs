@@ -64,7 +64,7 @@ attendRequest mvar (GetPeersRequest sender) =
 attendRequest mvar (DownloadRequest h pn) = 
     do ps <- readMVar mvar
        case getFilePart (Hash $ unhex h) pn (m_files ps) of 
-           Just (Part pp (Hash hp), num_parts) -> return $ tr $ Just (DownloadResponse (hex hp) l num_parts (hex pp))
+           Just (Part pp (Hash hp), num_parts) -> return $ tr $ Just (DownloadResponse (hex hp) l pn num_parts (hex pp))
                 where l = fromIntegral $ B.length pp
            Nothing -> return Nothing
        
@@ -105,6 +105,6 @@ requestPart peer (Hash h) n = do catchNetwork (Nothing, 0) $ performNetwork talk
           send s $ Request.encode $ DownloadRequest (hex h) n
           msg <- recv s read_max
           case Response.decode msg of 
-                Just (DownloadResponse h' l' n' p') -> return (Just $ Part  (unhex p') (Hash $ unhex h'), n')
+                Just (DownloadResponse h' l' n' n_o_p' p') -> return (Just $ Part  (unhex p') (Hash $ unhex h'), n_o_p')
                 Nothing -> return (Nothing, 0)
 

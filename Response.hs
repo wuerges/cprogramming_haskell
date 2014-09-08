@@ -14,6 +14,7 @@ data Response =
         { part_hash    :: !Text
         , part_length :: Int 
         , part_number :: Int 
+        , number_of_parts :: Int 
         , part :: !Text
         } 
     | GetPeersResponse
