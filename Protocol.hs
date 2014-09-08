@@ -18,6 +18,11 @@ import Data.Maybe
 import Debug.Trace
 import Fileio
 
+catchNetwork :: a -> IO a -> IO a
+catchNetwork df f = catch f (\ x -> do let err = show (x :: IOException)
+                                       putStrLn $ "Got exception: " ++ err 
+                                       return df)
+
 data PeerState = 
     PeerState
         { m_peers :: Set.Set Peer
@@ -81,9 +86,8 @@ performNetworkService t peer = withSocketsDo $ bracket connectMe sClose t
             bindSocket sock (addrAddress serveraddr) >> return sock
 
 requestPeers1 :: Peer -> IO (Set.Set Peer)
-requestPeers1 peer = do performNetwork talk peer
-    where --talk = undefined
-          talk s = do
+requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer
+    where talk s = do
           send s $ Request.encode $ GetPeersRequest peer 
           msg <- recv s read_max
           return $ Set.fromList $ peers $ fromMaybe null_peers_response (Response.decode msg)
@@ -96,7 +100,7 @@ requestPeers mvar = do
     modifyMVar_ mvar (ps_add_peers (Set.unions peers))
 
 requestPart :: Peer -> Hash -> Int -> IO (Maybe Part, Int)
-requestPart peer (Hash h) n = do performNetwork talk peer
+requestPart peer (Hash h) n = do catchNetwork (Nothing, 0) $ performNetwork talk peer
     where talk s = do
           send s $ Request.encode $ DownloadRequest (hex h) n
           msg <- recv s read_max

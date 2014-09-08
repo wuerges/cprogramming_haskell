@@ -1,4 +1,5 @@
 import Protocol
+import Control.Exception
 import Request
 import Response
 import Peer
@@ -51,7 +52,8 @@ mainloop dir port peers = do
     modifyMVar_ mvar (ps_add_peersL peers)
 
     --forkIO (server mvar my_peer fs)
-    forkIO $ performNetworkService (handler mvar) my_peer
+        
+    forkIO $ catchNetwork () $ performNetworkService (handler mvar) my_peer
     threadDelay 1000000
 
     --fileDownload (Fileio.hashes fs !! 0) my_peer
