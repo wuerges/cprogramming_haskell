@@ -26,6 +26,8 @@ data PeerState =
 
 read_max = (16*1024)
 
+tr x = traceShow x x
+
 
 ps_add_peer peer ps = do return $ ps { m_peers = Set.insert peer (m_peers ps) }
 ps_add_peers peers ps = do return $ ps { m_peers = Set.union (m_peers ps) peers }
@@ -57,7 +59,7 @@ attendRequest mvar (GetPeersRequest sender) =
 attendRequest mvar (DownloadRequest h pn) = 
     do ps <- readMVar mvar
        case getFilePart (Hash $ unhex h) pn (m_files ps) of 
-           Just (Part pp (Hash hp)) -> return $ Just (DownloadResponse (hex hp) l pn (hex pp))
+           Just (Part pp (Hash hp), num_parts) -> return $ tr $ Just (DownloadResponse (hex hp) l num_parts (hex pp))
                 where l = fromIntegral $ B.length pp
            Nothing -> return Nothing
        

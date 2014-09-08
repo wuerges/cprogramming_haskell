@@ -22,9 +22,9 @@ type FileMap  = Map.Map Hash File
 
 hashes = Map.keys
 
-getFilePart :: Hash -> Int -> FileMap -> Maybe Part
+getFilePart :: Hash -> Int -> FileMap -> Maybe (Part, Int)
 getFilePart h n fm = case Map.lookup h fm of
-    Just f -> if n < length (parts f) then Just $ (parts f) !! n
+    Just f -> if n < length (parts f) then Just (parts f !! n, length $ parts f)
                                       else Nothing
     Nothing -> Nothing
 

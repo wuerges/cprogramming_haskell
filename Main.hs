@@ -54,7 +54,7 @@ mainloop dir port peers = do
     forkIO $ performNetworkService (handler mvar) my_peer
     threadDelay 1000000
 
-    fileDownload (Fileio.hashes fs !! 0) my_peer
+    --fileDownload (Fileio.hashes fs !! 0) my_peer
 
     client mvar
     return ()
