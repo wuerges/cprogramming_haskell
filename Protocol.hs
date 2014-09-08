@@ -58,8 +58,7 @@ attendRequest :: MVar PeerState -> Request -> IO (Maybe Response)
 attendRequest mvar (GetPeersRequest sender) = 
     do ps <- readMVar mvar
        let ps' = ps { m_peers = Set.insert sender  (m_peers ps) }
-       modifyMVar_ mvar (\ps -> ps')
-       -- modifyMVar_ mvar (ps_add_peers (Set.unions peers))
+       modifyMVar_ mvar (\ps -> return ps')
        return $ Just $ GetPeersResponse (Set.toList $ m_peers ps')
        
 attendRequest mvar (DownloadRequest h pn) = 
