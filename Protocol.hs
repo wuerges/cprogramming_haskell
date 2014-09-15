@@ -63,7 +63,7 @@ attendRequest mvar (GetPeersRequest sender) =
        
 attendRequest mvar (DownloadRequest h pn) = 
     do ps <- readMVar mvar
-       case getFilePart (Hash $ unhex h) pn (m_files ps) of 
+       case getFilePart (Hash $ unhex $ ts h) pn (m_files ps) of 
            Just (Part pp (Hash hp), num_parts) -> return $ tr $ Just (DownloadResponse (hex hp) l pn num_parts (hex pp))
                 where l = fromIntegral $ B.length pp
            Nothing -> return Nothing

@@ -12,7 +12,6 @@ import System.Environment
 import qualified Data.Text as T
 import Fileio
 
-server_ip = "127.0.0.1" 
 my_hash = "my_hash_1"
 
 fileDownload hash peer = do
@@ -42,7 +41,7 @@ handler mvar conn = do
                 return ()
     handler mvar conn
 
-mainloop dir port peers = do
+mainloop dir port server_ip peers = do
     fs <- loadFiles dir
     mvar <- newMVar $ mkPSFM fs
     -- Adding myself to the list of known peers
@@ -56,11 +55,11 @@ mainloop dir port peers = do
     forkIO $ catchNetwork () $ performNetworkService (handler mvar) my_peer
     threadDelay 1000000
 
-    --fileDownload (Fileio.hashes fs !! 0) my_peer
+    --fileDownload (Fileio.hashes fs !! 1) my_peer
 
     client mvar
     return ()
 
 main = do
-    dir : port : peers : [] <- getArgs
-    mainloop dir (read port) (decodePeersS peers)
+    dir : port : server_ip : peers : [] <- getArgs
+    mainloop dir (read port) server_ip  (decodePeersS peers)

@@ -37,7 +37,7 @@ mkPart bs = Part bs (hashlazy bs)
 readParts :: FilePath -> IO File
 readParts fp = do 
     f <- B.readFile fp
-    return $ File (hashlazy f) (map mkPart $ splitEqual (1024 * 8) f)
+    return $ File (hashlazy f) (map mkPart $ splitEqual 1024 f)
 
 splitEqual :: Int -> B.ByteString -> [B.ByteString]
 splitEqual i bs = if B.length bs > i' 
