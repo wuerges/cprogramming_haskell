@@ -16,6 +16,11 @@ data Request =
     | GetPeersRequest
         { sender   :: Peer
         } 
+    | OfferFile 
+        { owner :: Peer
+        , offerFile :: !Text
+        , offerHash :: !Text
+        }
         deriving (Show, Generic, Eq)
 
 encode r = U.toStrict $ Data.Aeson.encode r :: SU.ByteString

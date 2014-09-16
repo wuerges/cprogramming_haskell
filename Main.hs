@@ -11,6 +11,7 @@ import Data.Maybe
 import System.Environment
 import qualified Data.Text as T
 import Fileio
+import DHT
 
 my_hash = "my_hash_1"
 
@@ -43,7 +44,7 @@ handler mvar conn = do
 
 mainloop dir port server_ip peers = do
     fs <- loadFiles dir
-    mvar <- newMVar $ mkPSFM fs
+    mvar <- newMVar $ mkPSFM fs (simplifyHash $ T.pack $ my_hash)
     -- Adding myself to the list of known peers
     let my_peer = Peer (T.pack server_ip) port (T.pack my_hash)
 

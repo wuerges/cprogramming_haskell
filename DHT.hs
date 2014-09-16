@@ -8,10 +8,11 @@ import Peer
 import Data.Maybe
 
 
-type Key = T.Text
+newtype Key = Key T.Text
+    deriving (Show, Ord, Eq)
 
 data Value = 
-    ValPeer Peer | ValInt Int
+    ValPeer Peer | ValInt Int | ValHash !T.Text
     deriving Show
 
 data Item = Item Key Value
@@ -26,10 +27,10 @@ data Line = Line Key (Maybe Item)
 
 {- Adds an item to a line -}
 addItemLine :: Item -> Line -> Line
-addItemLine (Item hi i) (Line k Nothing) = 
+addItemLine (Item (Key hi) i) (Line (Key k) Nothing) = 
     if T.take (T.length k) hi == k
-    then Line k (Just (Item hi i))
-    else Line k Nothing
+    then Line (Key k) (Just (Item (Key hi) i))
+    else Line (Key k) Nothing
 
 getItemLine k (Line _ i) = case i of
     Just (Item hi ii) -> if k == hi 
@@ -53,5 +54,8 @@ addItemDHT i (DHT k ls) = DHT k (map (addItemLine i) ls)
 locateItemDHT k (DHT _ ls) = catMaybes (map (getItemLine k) ls)
 
 
-genLine k = Line k Nothing
-genEmptyDHT k = DHT k (map genLine (T.inits k))
+simplifyHash :: T.Text -> Key
+simplifyHash t = Key t
+
+genLine k = Line (Key k) Nothing
+genEmptyDHT (Key k) = DHT (Key k) (map genLine (T.inits k))

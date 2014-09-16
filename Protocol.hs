@@ -17,6 +17,7 @@ import Control.Exception
 import Data.Maybe
 import Debug.Trace
 import Fileio
+import DHT
 
 catchNetwork :: a -> IO a -> IO a
 catchNetwork df f = catch f (\ x -> do let err = show (x :: IOException)
@@ -27,6 +28,7 @@ data PeerState =
     PeerState
         { m_peers :: Set.Set Peer
         , m_files :: FileMap
+        , m_dht :: DHT
         }
 
 read_max = (16*1024)
@@ -39,7 +41,7 @@ ps_add_peers peers ps = do return $ ps { m_peers = Set.union (m_peers ps) peers 
 ps_add_peersL peers ps = ps_add_peers (Set.fromList peers) ps
 
 
-mkPSFM fm = PeerState Set.empty fm
+mkPSFM fm my_hash = PeerState Set.empty fm (genEmptyDHT my_hash)
 --empty = PeerState Set.empty Map.empty
 
 
