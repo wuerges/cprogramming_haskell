@@ -48,8 +48,7 @@ mainloop dir port server_ip peers = do
     -- Adding myself to the list of known peers
     let my_peer = Peer (T.pack server_ip) port (T.pack my_hash)
 
-    modifyMVar_ mvar (ps_add_peer my_peer)
-    modifyMVar_ mvar (ps_add_peersL peers)
+    modifyMVar_ mvar (ps_add_peersIO $ Set.fromList (my_peer:peers))
 
     --forkIO (server mvar my_peer fs)
         

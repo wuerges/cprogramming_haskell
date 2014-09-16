@@ -28,7 +28,7 @@ data PeerState =
     PeerState
         { m_peers :: Set.Set Peer
         , m_files :: FileMap
-        , m_dht :: DHT
+        , m_dht :: DHT Peer
         }
 
 read_max = (16*1024)
@@ -36,10 +36,15 @@ read_max = (16*1024)
 tr x = traceShow x x
 
 
-ps_add_peer peer ps = do return $ ps { m_peers = Set.insert peer (m_peers ps) }
-ps_add_peers peers ps = do return $ ps { m_peers = Set.union (m_peers ps) peers }
-ps_add_peersL peers ps = ps_add_peers (Set.fromList peers) ps
+ps_add_peer peer ps = ps { m_peers = Set.insert peer (m_peers ps) 
+                         , m_dht = addItemDHT i (m_dht ps)
+                         }
+              where i = Item (simplifyHash $ Peer.hash peer) (Value peer)
 
+ps_add_peers :: Set.Set Peer -> PeerState -> PeerState
+ps_add_peers peers ps = Set.fold ps_add_peer ps peers 
+
+ps_add_peersIO peers ps = do return $ ps_add_peers peers ps
 
 mkPSFM fm my_hash = PeerState Set.empty fm (genEmptyDHT my_hash)
 --empty = PeerState Set.empty Map.empty
@@ -99,7 +104,7 @@ ts x = traceShow x x
 requestPeers mvar = do
     ps <- readMVar mvar 
     peers <- mapM requestPeers1 (Set.toList $ ts $ m_peers ps)
-    modifyMVar_ mvar (ps_add_peers (Set.unions peers))
+    modifyMVar_ mvar (ps_add_peersIO (Set.unions peers))
 
 requestPart :: Peer -> Hash -> Int -> IO (Maybe Part, Int)
 requestPart peer (Hash h) n = do catchNetwork (Nothing, 0) $ performNetwork talk peer

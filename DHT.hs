@@ -11,22 +11,21 @@ import Data.Maybe
 newtype Key = Key T.Text
     deriving (Show, Ord, Eq)
 
-data Value = 
-    ValPeer Peer | ValInt Int | ValHash !T.Text
+data Value a = Value a
     deriving Show
 
-data Item = Item Key Value
+data Item a = Item Key (Value a)
     deriving Show
 
 
 {- 
  - A line contains a prefix and an item that matches to that prefix.
  -}
-data Line = Line Key (Maybe Item)
+data Line a = Line Key (Maybe (Item a))
     deriving Show
 
 {- Adds an item to a line -}
-addItemLine :: Item -> Line -> Line
+addItemLine :: Item a -> Line a -> Line a
 addItemLine (Item (Key hi) i) (Line (Key k) Nothing) = 
     if T.take (T.length k) hi == k
     then Line (Key k) (Just (Item (Key hi) i))
@@ -43,7 +42,7 @@ getItemLine k (Line _ i) = case i of
  - A DHT has a key, and a list of lines, each line with a prefix 
  - that is increasingly similar to the key
  -}
-data DHT = DHT Key [Line]
+data DHT a = DHT Key [Line a]
     deriving Show
 
 {-
