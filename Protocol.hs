@@ -29,6 +29,7 @@ data PeerState =
         { m_peers :: Set.Set Peer
         , m_files :: FileMap
         , m_dht :: DHT Peer
+        , m_dht_files :: DHT Peer
         }
 
 read_max = (16*1024)
@@ -46,7 +47,7 @@ ps_add_peers peers ps = Set.fold ps_add_peer ps peers
 
 ps_add_peersIO peers ps = do return $ ps_add_peers peers ps
 
-mkPSFM fm my_hash = PeerState Set.empty fm (genEmptyDHT my_hash)
+mkPSFM fm my_hash = PeerState Set.empty fm (genEmptyDHT my_hash) (genEmptyDHT my_hash)
 --empty = PeerState Set.empty Map.empty
 
 
@@ -62,6 +63,12 @@ attendRequestBS mvar msg = do
                       return SU.empty
 
 attendRequest :: MVar PeerState -> Request -> IO (Maybe Response)
+attendRequest mvar (OfferFile op fh) = 
+    do ps <- readMVar mvar
+       let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (m_dht_files ps) } 
+       modifyMVar_ mvar (\ps -> return ps')
+       return $ Just $ GetPeersResponse (Set.toList $ m_peers ps')
+       
 attendRequest mvar (GetPeersRequest sender) = 
     do ps <- readMVar mvar
        let ps' = ps { m_peers = Set.insert sender  (m_peers ps) }

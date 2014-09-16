@@ -17,6 +17,8 @@ data Value a = Value a
 data Item a = Item Key (Value a)
     deriving Show
 
+mkItemDHT :: T.Text -> a -> Item a
+mkItemDHT t p = Item (simplifyHash t) (Value p)
 
 {- 
  - A line contains a prefix and an item that matches to that prefix.

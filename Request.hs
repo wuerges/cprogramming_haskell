@@ -17,8 +17,7 @@ data Request =
         { sender   :: Peer
         } 
     | OfferFile 
-        { owner :: Peer
-        , offerFile :: !Text
+        { offerOwner :: Peer
         , offerHash :: !Text
         }
         deriving (Show, Generic, Eq)
