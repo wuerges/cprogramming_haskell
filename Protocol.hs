@@ -19,6 +19,8 @@ import Debug.Trace
 import Fileio
 import DHT
 
+ts x = traceShow x x
+
 catchNetwork :: a -> IO a -> IO a
 catchNetwork df f = catch f (\ x -> do let err = show (x :: IOException)
                                        putStrLn $ "Got exception: " ++ err 
@@ -33,9 +35,6 @@ data PeerState =
         }
 
 read_max = (16*1024)
-
-tr x = traceShow x x
-
 
 ps_add_peer peer ps = ps { m_peers = Set.insert peer (m_peers ps) 
                          , m_dht = addItemDHT i (m_dht ps)
@@ -67,18 +66,17 @@ attendRequest mvar (OfferFile op fh) =
     do ps <- readMVar mvar
        let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (m_dht_files ps) } 
        modifyMVar_ mvar (\ps -> return ps')
-       return $ Just $ GetPeersResponse (Set.toList $ m_peers ps')
+       return Nothing
        
 attendRequest mvar (GetPeersRequest sender) = 
-    do ps <- readMVar mvar
-       let ps' = ps { m_peers = Set.insert sender  (m_peers ps) }
-       modifyMVar_ mvar (\ps -> return ps')
-       return $ Just $ GetPeersResponse (Set.toList $ m_peers ps')
+    do modifyMVar_ mvar (ps_add_peersIO $ Set.singleton sender)
+       ps <- readMVar mvar
+       return $ Just $ GetPeersResponse (Set.toList $ m_peers ps)
        
 attendRequest mvar (DownloadRequest h pn) = 
     do ps <- readMVar mvar
-       case getFilePart (Hash $ unhex $ ts h) pn (m_files ps) of 
-           Just (Part pp (Hash hp), num_parts) -> return $ tr $ Just (DownloadResponse (hex hp) l pn num_parts (hex pp))
+       case getFilePart (Hash $ unhex $ h) pn (m_files ps) of 
+           Just (Part pp (Hash hp), num_parts) -> return $ Just (DownloadResponse (hex hp) l pn num_parts (hex pp))
                 where l = fromIntegral $ B.length pp
            Nothing -> return Nothing
        
@@ -104,9 +102,8 @@ requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer
     where talk s = do
           send s $ Request.encode $ GetPeersRequest peer 
           msg <- recv s read_max
-          return $ Set.fromList $ peers $ fromMaybe null_peers_response (Response.decode msg)
+          return $ Set.fromList $ peers $ fromMaybe null_peers_response (Response.decode $ msg)
 
-ts x = traceShow x x
 
 requestPeers mvar = do
     ps <- readMVar mvar 
