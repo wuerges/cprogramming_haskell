@@ -3,6 +3,7 @@
 module Hex where
 
 import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as E
 import Data.Hex as H
@@ -16,6 +17,9 @@ unhex t = fromJust $ H.unhex $ encodeUTF t
 
 hex :: B.ByteString -> T.Text
 hex b = decodeUTF $ H.hex b
+
+lhex :: S.ByteString -> T.Text
+lhex b = E.decodeUtf8 $ H.hex b
 
 decodeUTF :: B.ByteString -> T.Text
 decodeUTF = E.decodeUtf8 . B.toStrict

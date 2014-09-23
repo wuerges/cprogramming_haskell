@@ -33,6 +33,9 @@ addItemLine (Item (Key hi) i) (Line (Key k) Nothing) =
     then Line (Key k) (Just (Item (Key hi) i))
     else Line (Key k) Nothing
 
+addItemLine i (Line k (Just v)) = Line k (Just v)
+
+
 getItemLine k (Line _ i) = case i of
     Just (Item hi ii) -> if k == hi 
                          then Just (Item hi ii)

@@ -27,6 +27,11 @@ fileDownload hash peer = do
                           return $ Just f
        (Nothing, _) -> return Nothing
 
+offerClient my_peer mvar = do
+    threadDelay 10000000
+    offerFiles my_peer mvar 
+    offerClient my_peer mvar
+
 client mvar = do
     threadDelay 5000000
     requestPeers mvar 
@@ -47,6 +52,7 @@ mainloop dir port server_ip peers = do
 
     --fileDownload (Fileio.hashes fs !! 1) my_peer
 
+    forkIO $ offerClient my_peer mvar
     client mvar
     return ()
 

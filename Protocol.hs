@@ -61,7 +61,7 @@ handler mvar conn = do
 attendRequestBS :: MVar PeerState -> SU.ByteString -> IO SU.ByteString 
 attendRequestBS mvar msg = do
     case Request.decode $ ts msg of 
-        Just req -> do rsp <- attendRequest mvar req
+        Just req -> do rsp <- attendRequest mvar (ts req)
                        case rsp of
                            Just LocalResponse -> return SU.empty
                            Just rsp -> return (Response.encode rsp)
@@ -73,9 +73,10 @@ attendRequestBS mvar msg = do
 attendRequest :: MVar PeerState -> Request -> IO (Maybe Response)
 attendRequest mvar (OfferFile op fh) = 
     do ps <- readMVar mvar
-       let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (ts $ m_dht_files ps) } 
+       let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (m_dht_files ps) } 
        modifyMVar_ mvar (\ps -> return ps')
-       return $ Just LocalResponse
+       --return $ ts $ m_dht_files ps'
+       return $ Just (trace ("attedend offer " ++ show (m_dht_files ps') ) LocalResponse)
        
 attendRequest mvar (GetPeersRequest sender) = 
     do modifyMVar_ mvar (ps_add_peersIO $ Set.singleton sender)
@@ -106,10 +107,19 @@ performNetworkService t peer = withSocketsDo $ bracket connectMe sClose t
             sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
             bindSocket sock (addrAddress serveraddr) >> return sock
 
---offerFile1 :: Peer -> Peer -> Hash -> IO a
---offerFile1 my_peer peer h = do catchNetwork Set.empty $ performNetwork talk peer
-    --where talk s = do
-          --send s $ Request.encode $ OfferFile my_peer h
+offerFiles1 :: Peer -> [Hash] -> Peer -> IO ()
+offerFiles1 my_peer hs peer = do catchNetwork () $ performNetwork talk peer
+    where talk s = do
+          let f h = send s $ Request.encode $ OfferFile my_peer (hashToText h)
+          mapM_ f hs
+          return ()
+
+offerFiles :: Peer -> MVar PeerState -> IO ()
+offerFiles my_peer mvar = do
+    ps <- readMVar mvar
+    let peers = Set.toList $ m_peers ps
+    mapM_ (offerFiles1 my_peer (hashes $ m_files ps)) peers
+
 
 requestPeers1 :: Peer -> IO (Set.Set Peer)
 requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer
@@ -118,10 +128,9 @@ requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer
           msg <- recv s read_max
           return $ Set.fromList $ peers $ fromMaybe null_peers_response (Response.decode $ msg)
 
-
 requestPeers mvar = do
     ps <- readMVar mvar 
-    peers <- mapM requestPeers1 (Set.toList $ ts $ m_peers ps)
+    peers <- mapM requestPeers1 (Set.toList $ m_peers ps)
     modifyMVar_ mvar (ps_add_peersIO (Set.unions peers))
 
 requestPart :: Peer -> Hash -> Int -> IO (Maybe Part, Int)

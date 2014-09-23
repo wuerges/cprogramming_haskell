@@ -3,6 +3,8 @@ module Fileio where
 import qualified Data.ByteString.Lazy as B
 import qualified Crypto.Hash.SHA256 as C
 import qualified Data.Map as Map
+import qualified Data.Text as T
+import qualified Hex as H
 import System.Directory
 import Control.Monad
 import System.FilePath
@@ -30,6 +32,9 @@ getFilePart h n fm = case Map.lookup h fm of
 
 
 hashlazy bs = Hash $ B.fromStrict $ C.hashlazy bs
+
+hashToText :: Hash -> T.Text
+hashToText (Hash h) = H.hex h 
 
 mkPart :: B.ByteString -> Part
 mkPart bs = Part bs (hashlazy bs)
