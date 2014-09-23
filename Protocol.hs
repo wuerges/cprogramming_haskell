@@ -75,7 +75,7 @@ attendRequest mvar (OfferFile op fh) =
     do ps <- readMVar mvar
        let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (ts $ m_dht_files ps) } 
        modifyMVar_ mvar (\ps -> return ps')
-       return LocalResponse
+       return $ Just LocalResponse
        
 attendRequest mvar (GetPeersRequest sender) = 
     do modifyMVar_ mvar (ps_add_peersIO $ Set.singleton sender)
