@@ -13,7 +13,7 @@ import qualified Data.Text as T
 import Fileio
 import DHT
 
-my_hash = "my_hash_1"
+my_hash = "000102030405060708090A"
 
 fileDownload hash peer = do
     threadDelay 5000
