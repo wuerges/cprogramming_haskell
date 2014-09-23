@@ -54,7 +54,7 @@ handler mvar conn = do
     (req,d) <- recvFrom conn (read_max)
     forkIO $ do rsp <- attendRequestBS mvar req
                 if SU.null rsp then return () 
-                               else do sendTo conn rsp d
+                               else do sendTo conn (ts rsp) d
                                        return ()
     handler mvar conn
 
@@ -117,7 +117,7 @@ offerFiles1 my_peer hs peer = do catchNetwork () $ performNetwork talk peer
 offerFiles :: Peer -> MVar PeerState -> IO ()
 offerFiles my_peer mvar = do
     ps <- readMVar mvar
-    let peers = Set.toList $ m_peers ps
+    let peers = Set.toList $ Set.delete my_peer $ m_peers ps
     mapM_ (offerFiles1 my_peer (hashes $ m_files ps)) peers
 
 
@@ -128,9 +128,10 @@ requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer
           msg <- recv s read_max
           return $ Set.fromList $ peers $ fromMaybe null_peers_response (Response.decode $ msg)
 
-requestPeers mvar = do
+requestPeers my_peer mvar = do
     ps <- readMVar mvar 
-    peers <- mapM requestPeers1 (Set.toList $ m_peers ps)
+    peers <- mapM requestPeers1 (Set.toList $ Set.delete my_peer $ m_peers ps)
+    putStrLn $ "Known peers: " ++ show peers
     modifyMVar_ mvar (ps_add_peersIO (Set.unions peers))
 
 requestPart :: Peer -> Hash -> Int -> IO (Maybe Part, Int)

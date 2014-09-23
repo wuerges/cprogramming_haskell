@@ -13,7 +13,7 @@ import qualified Data.Text as T
 import Fileio
 import DHT
 
-my_hash = "000102030405060708090A"
+my_hash = "03030103000102030001020300010203"
 
 fileDownload hash peer = do
     threadDelay 5000
@@ -32,10 +32,10 @@ offerClient my_peer mvar = do
     offerFiles my_peer mvar 
     offerClient my_peer mvar
 
-client mvar = do
+client my_peer mvar = do
     threadDelay 5000000
-    requestPeers mvar 
-    client mvar
+    requestPeers my_peer mvar 
+    client my_peer mvar
 
 mainloop dir port server_ip peers = do
     fs <- loadFiles dir
@@ -53,7 +53,7 @@ mainloop dir port server_ip peers = do
     --fileDownload (Fileio.hashes fs !! 1) my_peer
 
     forkIO $ offerClient my_peer mvar
-    client mvar
+    client my_peer mvar
     return ()
 
 main = do
