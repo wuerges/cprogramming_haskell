@@ -32,16 +32,6 @@ client mvar = do
     requestPeers mvar 
     client mvar
 
---server mvar peer fs = performNetworkService (handler mvar) peer
-
-handler :: MVar PeerState -> Socket -> IO ()
-handler mvar conn = do
-    (req,d) <- recvFrom conn (read_max)
-    forkIO $ do rsp <- attendRequestBS mvar req
-                sendTo conn rsp d
-                return ()
-    handler mvar conn
-
 mainloop dir port server_ip peers = do
     fs <- loadFiles dir
     mvar <- newMVar $ mkPSFM fs (simplifyHash $ T.pack $ my_hash)

@@ -49,12 +49,21 @@ ps_add_peersIO peers ps = do return $ ps_add_peers peers ps
 mkPSFM fm my_hash = PeerState Set.empty fm (genEmptyDHT my_hash) (genEmptyDHT my_hash)
 --empty = PeerState Set.empty Map.empty
 
+handler :: MVar PeerState -> Socket -> IO ()
+handler mvar conn = do
+    (req,d) <- recvFrom conn (read_max)
+    forkIO $ do rsp <- attendRequestBS mvar req
+                if SU.null rsp then return () 
+                               else do sendTo conn rsp d
+                                       return ()
+    handler mvar conn
 
 attendRequestBS :: MVar PeerState -> SU.ByteString -> IO SU.ByteString 
 attendRequestBS mvar msg = do
-    case Request.decode msg of 
+    case Request.decode $ ts msg of 
         Just req -> do rsp <- attendRequest mvar req
                        case rsp of
+                           Just LocalResponse -> return SU.empty
                            Just rsp -> return (Response.encode rsp)
                            Nothing -> do putStrLn "could not attend request"
                                          return SU.empty
@@ -64,7 +73,7 @@ attendRequestBS mvar msg = do
 attendRequest :: MVar PeerState -> Request -> IO (Maybe Response)
 attendRequest mvar (OfferFile op fh) = 
     do ps <- readMVar mvar
-       let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (m_dht_files ps) } 
+       let ps' = ps { m_dht_files = addItemDHT (mkItemDHT fh op) (ts $ m_dht_files ps) } 
        modifyMVar_ mvar (\ps -> return ps')
        return Nothing
        
@@ -96,6 +105,11 @@ performNetworkService t peer = withSocketsDo $ bracket connectMe sClose t
                                 Nothing (Just $ portS peer)
             sock <- socket (addrFamily serveraddr) Datagram defaultProtocol
             bindSocket sock (addrAddress serveraddr) >> return sock
+
+--offerFile1 :: Peer -> Peer -> Hash -> IO a
+--offerFile1 my_peer peer h = do catchNetwork Set.empty $ performNetwork talk peer
+    --where talk s = do
+          --send s $ Request.encode $ OfferFile my_peer h
 
 requestPeers1 :: Peer -> IO (Set.Set Peer)
 requestPeers1 peer = do catchNetwork Set.empty $ performNetwork talk peer

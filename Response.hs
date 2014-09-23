@@ -20,6 +20,7 @@ data Response =
     | GetPeersResponse
         { peers :: [Peer]
         } 
+    | LocalResponse
         deriving (Show, Generic, Eq)
 
 null_peers_response = GetPeersResponse []
