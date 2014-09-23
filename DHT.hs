@@ -6,9 +6,11 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as U
 import Peer
 import Data.Maybe
+import Data.Char
+import Data.List
 
 
-newtype Key = Key T.Text
+newtype Key = Key [Int]
     deriving (Show, Ord, Eq)
 
 data Value a = Value a
@@ -29,7 +31,7 @@ data Line a = Line Key (Maybe (Item a))
 {- Adds an item to a line -}
 addItemLine :: Item a -> Line a -> Line a
 addItemLine (Item (Key hi) i) (Line (Key k) Nothing) = 
-    if T.take (T.length k) hi == k
+    if take (length k) hi == k
     then Line (Key k) (Just (Item (Key hi) i))
     else Line (Key k) Nothing
 
@@ -58,8 +60,10 @@ addItemDHT i (DHT k ls) = DHT k (map (addItemLine i) ls)
 locateItemDHT k (DHT _ ls) = catMaybes (map (getItemLine k) ls)
 
 
+mod4 n = n `mod` 4
+
 simplifyHash :: T.Text -> Key
-simplifyHash t = Key t
+simplifyHash t = Key (map (mod4 . ord) $ T.unpack t)
 
 genLine k = Line (Key k) Nothing
-genEmptyDHT (Key k) = DHT (Key k) (map genLine (T.inits k))
+genEmptyDHT (Key k) = DHT (Key k) (map genLine (inits k))
