@@ -52,7 +52,7 @@ mainloop dir port server_ip peers = do
 
     --fileDownload (Fileio.hashes fs !! 1) my_peer
 
-    forkIO $ offerClient my_peer mvar
+    --forkIO $ offerClient my_peer mvar
     client my_peer mvar
     return ()
 
